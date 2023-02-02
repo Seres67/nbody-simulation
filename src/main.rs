@@ -6,7 +6,7 @@ use crate::body::World;
 mod body;
 mod util;
 
-fn running_events(_world: &mut World, running: &mut bool, _mouse: MouseState, event: &Event) -> bool
+fn running_events(wait_ms: &mut u64, running: &mut bool, event: &Event) -> bool
 {
     match event {
         Event::Quit { .. } => {
@@ -14,6 +14,12 @@ fn running_events(_world: &mut World, running: &mut bool, _mouse: MouseState, ev
         }
         Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Space), .. } => {
             *running = false;
+        }
+        Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::F), .. } => {
+            *wait_ms /= 2;
+        }
+        Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::G), .. } => {
+            *wait_ms *= 2;
         }
         _ => {}
     }
@@ -76,6 +82,7 @@ fn main() {
         .unwrap();
     let mut canvas = window.into_canvas().build().unwrap();
     let mut world = World::new();
+    let mut wait_ms = 16;
     canvas.set_draw_color(Color::BLACK);
     canvas.clear();
     canvas.present();
@@ -88,7 +95,7 @@ fn main() {
                 if not_running_events(&mut world, &mut running, mouse, &event) {
                     break 'running;
                 }
-            } else if running && running_events(&mut world, &mut running, mouse, &event) {
+            } else if running && running_events(&mut wait_ms, &mut running, &event) {
                 break 'running;
             }
         }
@@ -99,6 +106,6 @@ fn main() {
         canvas.clear();
         world.draw(&mut canvas);
         canvas.present();
-        std::thread::sleep(std::time::Duration::from_millis(16));
+        std::thread::sleep(std::time::Duration::from_millis(wait_ms));
     }
 }
