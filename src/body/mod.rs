@@ -3,6 +3,15 @@ use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::pixels::Color;
 use crate::util::Vector2;
 
+#[derive(Clone)]
+pub struct Body
+{
+    pub position: Vector2<f32>,
+    pub velocity: Vector2<f32>,
+    pub mass: f32,
+    pub radius: f32,
+}
+
 pub struct World
 {
     pub initial_bodies: Vec<Body>,
@@ -24,19 +33,20 @@ impl World
         self.initial_bodies = self.bodies.clone();
     }
 
-    pub fn update(&mut self)
-    {
-        let mut accel_map: HashMap<u32, Vector2<f32>> = HashMap::new();
-        for body in self.bodies.iter()
-        {
+    pub fn update(&mut self) {
+        let mut accelerations = vec![Vector2::new(0.0, 0.0); self.bodies.len()];
+        for (i, body) in self.bodies.iter().enumerate() {
             let mut accel_acc = Vector2::new(0.0, 0.0);
-            for second_body in self.bodies.iter() {
+            for (j, second_body) in self.bodies.iter().enumerate() {
+                if i == j {
+                    continue;
+                }
                 let r_vector = vec![body.position.x - second_body.position.x, body.position.y - second_body.position.y];
-                let r_mag = (r_vector[0] * r_vector[0] + r_vector[1] * r_vector[1]).sqrt();
-                let r_mag = if r_mag < body.radius + second_body.radius {
+                let r_mag = (r_vector[0] * r_vector[0] + r_vector[1] * r_vector[1]);
+                let r_mag = if r_mag < (body.radius + second_body.radius) * (body.radius + second_body.radius) {
                     body.radius + second_body.radius
                 } else {
-                    r_mag
+                    r_mag.sqrt()
                 };
                 let accel = -1.0 * physical_constants::STANDARD_ACCELERATION_OF_GRAVITY * second_body.mass as f64 / r_mag.powf(2.0) as f64;
                 let r_vector_unit = [r_vector[0] / r_mag, r_vector[1] / r_mag];
@@ -44,18 +54,17 @@ impl World
                 accel_acc.x += tmp[0] as f32;
                 accel_acc.y += tmp[1] as f32;
             }
-            accel_map.insert((body.radius + body.mass + body.position.x + body.position.y) as u32, accel_acc);
+            accelerations[i] = accel_acc;
         }
-        for body in self.bodies.iter_mut()
-        {
-            let id = (body.radius + body.mass + body.position.x + body.position.y) as u32;
-            let accel = accel_map.get(&id).unwrap();
+        for (i, body) in self.bodies.iter_mut().enumerate() {
+            let accel = accelerations[i];
             body.velocity.x += accel.x;
             body.velocity.y += accel.y;
             body.position.x += body.velocity.x;
             body.position.y += body.velocity.y;
         }
     }
+
 
     pub fn draw(&self, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>)
     {
@@ -74,13 +83,4 @@ impl World
             radius: 2.0,
         });
     }
-}
-
-#[derive(Clone)]
-pub struct Body
-{
-    pub position: Vector2<f32>,
-    pub velocity: Vector2<f32>,
-    pub mass: f32,
-    pub radius: f32,
 }
