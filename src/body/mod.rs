@@ -77,8 +77,13 @@ impl World
 
     pub fn draw(&self, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>, font: &mut sdl2::ttf::Font, selected_body: Option<u16>)
     {
-        for body in &self.bodies
-        {
+        for body in &self.bodies {
+            if let Some(id) = selected_body {
+                if id == body.id {
+                    canvas.filled_circle(body.position.x as i16, body.position.y as i16, body.radius as i16, Color::RGB(255, 0, 0)).unwrap();
+                    continue;
+                }
+            }
             canvas.filled_circle(body.position.x as i16, body.position.y as i16, body.radius as i16, Color::RGB(255, (255.0 * (100.0 - body.mass) / 100.0) as u8, (255.0 * (100.0 - body.mass) / 100.0) as u8)).unwrap();
         }
         if let Some(..) = selected_body {
