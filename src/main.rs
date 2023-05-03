@@ -24,7 +24,7 @@ fn running_events(appstate: &mut AppState, event: &Event) -> bool
         Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
             let mut found = false;
             for body in appstate.world.bodies.iter() {
-                if (*x as f32 - body.position.x).powf(2.) + (*y as f32 - body.position.y).powf(2.) < body.radius.powf(2.) {
+                if (*x as f32 - body.position.x).powf(2.) + (*y as f32 - body.position.y).powf(2.) < body.radius.powf(2.) + 64. {
                     appstate.selected_body = Some(body.id);
                     found = true;
                 }
